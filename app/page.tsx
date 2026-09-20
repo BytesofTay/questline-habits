@@ -30,6 +30,9 @@ export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newQuest, setNewQuest] = useState("");
   const [matched, setMatched] = useState(false);
+  const [battleEnergy, setBattleEnergy] = useState(3);
+  const [battleState, setBattleState] = useState<"lobby" | "fighting" | "won">("lobby");
+  const [opponentHp, setOpponentHp] = useState(100);
   const done = useMemo(() => quests.filter((quest) => quest.complete).length, [quests]);
 
   function completeQuest(id: number) {
@@ -47,6 +50,29 @@ export default function Home() {
     setQuests((current) => [...current, { id: Date.now(), icon: "⚡", title, detail: "Custom · Common", reward: 40, color: "#ffca3a", complete: false }]);
     setNewQuest("");
     setDialogOpen(false);
+  }
+
+  function startBattle() {
+    if (battleEnergy < 1 || battleState !== "lobby") return;
+    setBattleEnergy((value) => value - 1);
+    setOpponentHp(100);
+    setBattleState("fighting");
+  }
+
+  function useEnergyStrike() {
+    if (battleState !== "fighting") return;
+    const nextHp = Math.max(0, opponentHp - 34);
+    setOpponentHp(nextHp);
+    if (nextHp === 0) {
+      setBattleState("won");
+      setCoins((value) => value + 120);
+      setXp((value) => Math.min(100, value + 10));
+    }
+  }
+
+  function resetBattle() {
+    setBattleState("lobby");
+    setOpponentHp(100);
   }
 
   useEffect(() => {
@@ -104,7 +130,7 @@ export default function Home() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#080918]/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-[1500px] items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-lime-300 text-slate-950 shadow-[0_0_28px_rgba(185,255,70,.35)]"><Zap className="size-5 fill-current" /></span><div><p className="font-black tracking-tight">QUESTLINE</p><p className="text-xs text-white/45">Season 01 · Day 12</p></div></div>
-          <nav className="hidden items-center gap-7 text-sm font-bold text-white/55 md:flex" aria-label="Primary navigation"><a className="text-white" href="#quests">Play</a><a href="#squad">Squad</a><a href="#leaderboard">Ranks</a></nav>
+          <nav className="hidden items-center gap-7 text-sm font-bold text-white/55 md:flex" aria-label="Primary navigation"><a className="text-white" href="#quests">Play</a><a href="#battle">Battle</a><a href="#squad">Squad</a><a href="#leaderboard">Ranks</a></nav>
           <div className="flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-2 font-black text-amber-200"><span>◈</span><span>{coins.toLocaleString()}</span></div>
         </div>
         <div className="mx-auto max-w-[1500px] px-4 pb-3 sm:px-6 lg:px-8">
@@ -135,6 +161,14 @@ export default function Home() {
               <div className="relative mx-auto h-[320px] w-full max-w-[310px] self-end"><div className="absolute inset-x-10 bottom-3 h-14 rounded-full bg-cyan-300/25 blur-2xl" /><Image src="/assets/questline-champion.png" alt="Your futuristic Questline champion avatar" fill priority className="object-contain object-bottom drop-shadow-[0_24px_40px_rgba(0,0,0,.5)]" /><div className="absolute bottom-4 left-0 rounded-2xl border border-white/15 bg-slate-950/75 p-3 backdrop-blur"><p className="text-xs font-bold text-white/45">CHAMPION</p><p className="font-black">Rookie Volt · Lv. 7</p></div></div>
             </div>
           </div>
+
+          <section id="battle" className="rounded-[24px] border border-violet-300/20 bg-gradient-to-br from-violet-500/15 via-white/[.045] to-cyan-300/[.06] p-4 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div><p className="text-xs font-black uppercase tracking-[.2em] text-violet-300">Battle hub</p><h2 className="mt-1 text-2xl font-black">Put your progress to the test</h2><p className="mt-2 max-w-xl text-sm leading-6 text-white/55">Fictional avatar duels use level brackets and capped rewards, so consistency and strategy matter more than grinding.</p></div>
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-2 text-sm font-black"><span className="text-violet-300">⚡</span> {battleEnergy}/3 energy</div>
+            </div>
+            {battleState === "lobby" ? <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto] md:items-center"><div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4"><div className="grid size-12 place-items-center rounded-xl bg-cyan-300/15 text-xl">🛡️</div><div><p className="text-xs font-black uppercase tracking-[.16em] text-cyan-300">Matched opponent</p><p className="font-black">PixelPace · Level 7</p><p className="text-sm text-white/45">Battle rating 1,230 · Friendly competitive</p></div></div><div className="flex items-center gap-4 md:justify-end"><div><p className="text-xs font-black uppercase tracking-[.16em] text-amber-300">Win reward</p><p className="font-black text-amber-200">◈ 120 coins + 10 XP</p></div><Button onClick={startBattle} disabled={battleEnergy < 1} className="h-12 rounded-xl bg-violet-400 px-5 font-black text-slate-950 hover:bg-violet-300 disabled:bg-white/10 disabled:text-white/35"><Swords /> Start duel</Button></div></div> : <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4 sm:p-5"><div className="mb-4 flex items-center justify-between text-sm font-black"><span className="text-cyan-200">You · Lv. 7</span><span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[.16em] text-white/45">{battleState === "won" ? "Victory" : "Round 1"}</span><span className="text-violet-200">PixelPace · Lv. 7</span></div><div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3"><div><div className="mb-2 flex justify-between text-xs font-bold text-white/50"><span>Champion energy</span><span>100%</span></div><div className="h-3 overflow-hidden rounded-full bg-white/10"><div className="h-full w-full rounded-full bg-gradient-to-r from-lime-300 to-cyan-300" /></div></div><span className="text-lg font-black text-white/35">VS</span><div><div className="mb-2 flex justify-between text-xs font-bold text-white/50"><span>Opponent energy</span><span>{opponentHp}%</span></div><div className="h-3 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-300 to-fuchsia-400 transition-all" style={{ width: `${opponentHp}%` }} /></div></div></div><div className="mt-5 flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-white/55">{battleState === "won" ? "Victory secured. Your reward has been added." : "Use an energy strike to deal 34 damage."}</p>{battleState === "won" ? <Button onClick={resetBattle} variant="outline" className="rounded-xl border-white/15 bg-white/5 font-bold text-white hover:bg-white/10">Back to battle hub</Button> : <Button onClick={useEnergyStrike} className="rounded-xl bg-lime-300 font-black text-slate-950 hover:bg-lime-200"><Zap /> Energy strike</Button>}</div></div>}
+          </section>
 
           <section id="quests" className="rounded-[24px] border border-white/10 bg-white/[.045] p-4 sm:p-6">
             <div className="mb-5 flex items-center justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-[.2em] text-violet-300">Today’s run</p><h2 className="mt-1 text-2xl font-black">Daily quests <span className="text-white/35">{done}/{quests.length}</span></h2></div><Dialog open={dialogOpen} onOpenChange={setDialogOpen}><DialogTrigger asChild><Button className="rounded-xl bg-violet-500 font-black hover:bg-violet-400"><Plus /> Add quest</Button></DialogTrigger><DialogContent className="border-white/15 bg-[#11142b] text-white"><DialogHeader><DialogTitle>Create a quest</DialogTitle><DialogDescription className="text-white/55">Choose one action you can clearly finish today.</DialogDescription></DialogHeader><label className="text-sm font-bold" htmlFor="quest-title">Quest name</label><input id="quest-title" value={newQuest} onChange={(event) => setNewQuest(event.target.value)} onKeyDown={(event) => event.key === "Enter" && addQuest()} placeholder="Example: Meditate for 10 minutes" className="h-12 rounded-xl border border-white/15 bg-black/25 px-4 outline-none focus:border-cyan-300"/><DialogFooter><Button className="bg-lime-300 font-black text-slate-950 hover:bg-lime-200" onClick={addQuest}>Add for +40 coins</Button></DialogFooter></DialogContent></Dialog></div>

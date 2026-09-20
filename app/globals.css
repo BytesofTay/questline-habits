@@ -161,6 +161,27 @@ body {
   filter: saturate(1.15) brightness(1.04);
 }
 
+.mobile-nav a {
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.mobile-nav a:hover,
+.mobile-nav a:focus-visible {
+  background: rgba(255, 216, 79, .12);
+  color: #ffd84f;
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-royale-ui *,
+  .battle-royale-ui *::before,
+  .battle-royale-ui *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
+
 html { scroll-behavior: smooth; }
 
 .arena-grid::after {

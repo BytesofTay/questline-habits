@@ -147,3 +147,16 @@ html { scroll-behavior: smooth; }
   background-size: 34px 34px;
   mask-image: linear-gradient(to bottom, transparent, black 25%, black 70%, transparent);
 }
+
+.leaderboard-glow {
+  position: relative;
+}
+
+.leaderboard-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 202, 58, .14), rgba(51, 214, 255, .1), transparent);
+}

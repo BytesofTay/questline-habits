@@ -34,3 +34,7 @@ The core interaction is in [`app/page.tsx`](app/page.tsx), with styling in [`app
 4. Add interaction tests for creation, completion, refresh, and error states.
 
 This is a product prototype, not a released multiplayer habit platform.
+
+## Verification
+
+GitHub Actions installs from the lockfile, runs ESLint, and builds the app on each push and pull request. These checks establish that the source compiles; they do not test the user interaction or persistence behavior.

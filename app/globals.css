@@ -1,0 +1,213 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../vendor/shadcn-tailwind-4.13.0.css";
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility scrollbar-gutter-stable {
+  scrollbar-gutter: stable;
+}
+
+:root {
+  --background: #071b36;
+  --foreground: #f8fafc;
+  --card: #0c2345;
+  --card-foreground: #f8fafc;
+  --popover: #0c2345;
+  --popover-foreground: #f8fafc;
+  --primary: #ffd84f;
+  --primary-foreground: #08101a;
+  --secondary: #262a4a;
+  --secondary-foreground: #f8fafc;
+  --muted: #1a1d35;
+  --muted-foreground: #a7acc1;
+  --accent: #7c52ff;
+  --accent-foreground: #ffffff;
+  --destructive: #e7000b;
+  --border: #ffffff1a;
+  --input: #ffffff1f;
+  --ring: #55d6ff;
+  --chart-1: #f54900;
+  --chart-2: #009689;
+  --chart-3: #104e64;
+  --chart-4: #ffb900;
+  --chart-5: #fe9a00;
+  --radius: 0.875rem;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #171717;
+  --sidebar-primary: #171717;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #a1a1a1;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --card: #171717;
+    --card-foreground: #ededed;
+    --popover: #171717;
+    --popover-foreground: #ededed;
+    --primary: #ededed;
+    --primary-foreground: #171717;
+    --secondary: #262626;
+    --secondary-foreground: #ededed;
+    --muted: #262626;
+    --muted-foreground: #a1a1a1;
+    --accent: #262626;
+    --accent-foreground: #ededed;
+    --destructive: #ff6467;
+    --border: #ffffff1a;
+    --input: #ffffff26;
+    --ring: #737373;
+    --chart-1: #8e51ff;
+    --chart-2: #00bc7d;
+    --chart-3: #fe9a00;
+    --chart-4: #ad46ff;
+    --chart-5: #ff2056;
+    --sidebar: #171717;
+    --sidebar-foreground: #ededed;
+    --sidebar-primary: #8e51ff;
+    --sidebar-primary-foreground: #ededed;
+    --sidebar-accent: #262626;
+    --sidebar-accent-foreground: #ededed;
+    --sidebar-border: #ffffff1a;
+    --sidebar-ring: #737373;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.battle-royale-ui {
+  background-image: radial-gradient(circle at 75% 8%, rgba(55, 193, 255, .16), transparent 28rem), radial-gradient(circle at 5% 42%, rgba(255, 100, 86, .08), transparent 22rem);
+}
+
+.battle-royale-ui h1,
+.battle-royale-ui h2,
+.battle-royale-ui h3 {
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  letter-spacing: .015em;
+}
+
+.game-panel {
+  border-radius: 20px 7px 20px 7px;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+
+.battle-royale-ui button:not([disabled]) {
+  transition: transform .18s ease, filter .18s ease;
+}
+
+.battle-royale-ui button:not([disabled]):hover {
+  transform: translateY(-1px) skewX(-1deg);
+  filter: saturate(1.15) brightness(1.04);
+}
+
+.mobile-nav a {
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.mobile-nav a:hover,
+.mobile-nav a:focus-visible {
+  background: rgba(255, 216, 79, .12);
+  color: #ffd84f;
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-royale-ui *,
+  .battle-royale-ui *::before,
+  .battle-royale-ui *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
+
+html { scroll-behavior: smooth; }
+
+.arena-grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .11;
+  background-image: linear-gradient(rgba(255,255,255,.22) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom, transparent, black 25%, black 70%, transparent);
+}
+
+.arena-grid {
+  background-image: linear-gradient(135deg, rgba(85, 214, 255, .08) 25%, transparent 25%, transparent 50%, rgba(85, 214, 255, .08) 50%, rgba(85, 214, 255, .08) 75%, transparent 75%);
+  background-size: 96px 96px;
+}
+
+.leaderboard-glow {
+  position: relative;
+}
+
+.leaderboard-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 202, 58, .14), rgba(51, 214, 255, .1), transparent);
+}

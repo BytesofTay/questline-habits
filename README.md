@@ -16,25 +16,22 @@ Open the local URL printed by the development server. `npm run build` checks the
 ## What works
 
 - Complete the supplied daily quests and see coins, XP, and progress update.
-- Add a custom quest and complete it during the same session.
+- Add custom quests, complete them, and retain quests/rewards after a page refresh in that browser.
 - Play through a short, scripted battle interaction.
 - Explore a responsive dashboard and mobile navigation.
 
-The state currently lives in React memory. Refreshing the page resets quests and rewards. The leaderboard, opponent, and squad matchmaking are sample content; there are no real accounts, shared rankings, multiplayer sessions, or durable database records. The repository contains optional D1/Drizzle starter files, but the app does not use a database yet.
+Quest progress is stored locally in browser `localStorage`; it does not sync across devices and can be cleared by the user or browser. The leaderboard, opponent, and squad matchmaking are sample content; there are no real accounts, shared rankings, multiplayer sessions, or server-side records. The repository contains optional D1/Drizzle starter files, but the app does not use a database yet.
 
 ## Implementation
 
-The core interaction is in [`app/page.tsx`](app/page.tsx), with styling in [`app/globals.css`](app/globals.css). The UI uses React, TypeScript, Tailwind CSS, and Vinext. The included project scaffolding supports local development and build tooling.
+The UI is in [`app/page.tsx`](app/page.tsx); pure quest state and versioned local persistence are in [`lib/questline-state.mjs`](lib/questline-state.mjs), with styling in [`app/globals.css`](app/globals.css). The UI uses React, TypeScript, Tailwind CSS, and Vinext.
 
-## Next engineering milestones
+## Current limits
 
-1. Extract quest state and reward rules into small testable modules.
-2. Persist user-owned quests and progress with an explicit data model.
-3. Replace sample leaderboard and matchmaking content only after real user accounts and server-side rules exist.
-4. Add interaction tests for creation, completion, refresh, and error states.
+The saved state is device/browser-local and the app has no account recovery. The leaderboard, opponent, and squad match are mock data, not evidence of real users or a live multiplayer system. Battle interactions are scripted prototype behavior.
 
 This is a product prototype, not a released multiplayer habit platform.
 
 ## Verification
 
-GitHub Actions installs from the lockfile, runs ESLint, and builds the app on each push and pull request. These checks establish that the source compiles; they do not test the user interaction or persistence behavior.
+Run `npm test`, `npm run lint`, and `npm run build`. The Node test suite covers creating quests, rewarding completion once, saving/reloading after refresh, and recovering from malformed local data. GitHub Actions runs those checks on each push and pull request.

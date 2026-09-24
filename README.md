@@ -34,4 +34,4 @@ This is a product prototype, not a released multiplayer habit platform.
 
 ## Verification
 
-Run `npm test`, `npm run lint`, and `npm run build`. The Node test suite covers creating quests, rewarding completion once, saving/reloading after refresh, and recovering from malformed local data. GitHub Actions runs those checks on each push and pull request.
+Run `npm test`, `npm run test:e2e`, `npm run lint`, and `npm run build`. The Node tests exercise quest and reward state; the Playwright browser test creates and completes quests, reloads the page, and confirms the saved UI state. GitHub Actions runs these checks on each push and pull request.

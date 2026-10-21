@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { Check, ChevronRight, Flame, Home, Plus, Shield, Sparkles, Swords, Trophy, Users, Zap } from "lucide-react";
+import { Bell, Check, ChevronRight, Flame, Home, Plus, Shield, Sparkles, Swords, Trophy, Users, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { QuestlineOnboarding, type QuestlineProfile } from "@/app/onboarding";
+import { battleStrikeFeedback, isNativeApp, questCompleteFeedback, scheduleDailyQuestReminder } from "@/lib/native";
 
 type Quest = { id: number; icon: string; title: string; detail: string; reward: number; color: string; complete: boolean };
 
@@ -55,10 +56,13 @@ export default function QuestlineGame() {
   const [battleEnergy, setBattleEnergy] = useState(3);
   const [battleState, setBattleState] = useState<"lobby" | "fighting" | "won">("lobby");
   const [opponentHp, setOpponentHp] = useState(100);
+  const [nativeApp, setNativeApp] = useState(false);
+  const [reminderState, setReminderState] = useState<"idle" | "scheduled" | "denied">("idle");
   const done = useMemo(() => quests.filter((quest) => quest.complete).length, [quests]);
   const completionPercent = Math.round((done / quests.length) * 100);
 
   useEffect(() => {
+    setNativeApp(isNativeApp());
     try {
       const stored = window.localStorage.getItem(profileStorageKey);
       if (!stored) {
@@ -112,6 +116,7 @@ export default function QuestlineGame() {
       if (quest.id !== id || quest.complete) return quest;
       setCoins((value) => value + quest.reward);
       setXp((value) => Math.min(100, value + Math.round(quest.reward / 6)));
+      void questCompleteFeedback();
       return { ...quest, complete: true };
     }));
   }
@@ -133,6 +138,7 @@ export default function QuestlineGame() {
 
   function useEnergyStrike() {
     if (battleState !== "fighting") return;
+    void battleStrikeFeedback();
     const nextHp = Math.max(0, opponentHp - 34);
     setOpponentHp(nextHp);
     if (nextHp === 0) {
@@ -145,6 +151,12 @@ export default function QuestlineGame() {
   function resetBattle() {
     setBattleState("lobby");
     setOpponentHp(100);
+  }
+
+  async function enableDailyReminder() {
+    const result = await scheduleDailyQuestReminder();
+    if (result.status === "scheduled") setReminderState("scheduled");
+    if (result.status === "denied") setReminderState("denied");
   }
 
   useEffect(() => {
@@ -215,7 +227,7 @@ export default function QuestlineGame() {
           <section id="leaderboard" aria-label="Weekly leaderboard" className="leaderboard-glow flex h-[66px] w-full items-center overflow-hidden rounded-full border border-amber-300/25 bg-[#11142b]/95 shadow-[0_14px_35px_rgba(0,0,0,.38)]">
             <div className="flex h-full shrink-0 items-center gap-2 border-r border-white/10 bg-gradient-to-r from-amber-300/15 to-transparent px-4 sm:px-5">
               <span className="grid size-9 place-items-center rounded-full bg-amber-300/15 text-amber-300"><Trophy className="size-4" /></span>
-              <span className="hidden sm:block"><span className="block text-[11px] font-black uppercase tracking-[.18em] text-amber-300">Weekly league</span><span className="block text-sm font-black">Top players</span></span>
+              <span className="hidden sm:block"><span className="block text-[11px] font-black uppercase tracking-[.18em] text-amber-300">Practice league</span><span className="block text-sm font-black">Demo rankings</span></span>
             </div>
             <ol className="scrollbar-none flex min-w-0 flex-1 items-center overflow-x-auto px-2 sm:justify-between sm:px-3">
               {leaderboard.map((player) => <li key={player.rank} className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-2 sm:min-w-[148px] sm:flex-1 sm:justify-center ${player.you ? "border border-lime-300/30 bg-lime-300/10" : ""}`}><span className="text-xs font-black text-white/35">#{player.rank}</span><span className={`grid size-8 place-items-center rounded-full text-xs font-black ${player.you ? "bg-lime-300 text-slate-950" : "bg-white/10"}`}>{player.avatar}</span><span className="min-w-0"><span className="block max-w-[90px] truncate text-sm font-extrabold">{player.name}</span><span className="block text-[11px] font-bold text-white/40">{player.score.toLocaleString()} XP</span></span></li>)}
@@ -243,7 +255,7 @@ export default function QuestlineGame() {
 
           <section id="battle" className="game-panel rounded-[24px] border border-violet-300/20 bg-gradient-to-br from-violet-500/15 via-white/[.045] to-cyan-300/[.06] p-4 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div><p className="text-xs font-black uppercase tracking-[.2em] text-violet-300">Battle hub</p><h2 className="mt-1 text-2xl font-black">Put your progress to the test</h2><p className="mt-2 max-w-xl text-sm leading-6 text-white/55">Fictional avatar duels use level brackets and capped rewards, so consistency and strategy matter more than grinding.</p></div>
+              <div><p className="text-xs font-black uppercase tracking-[.2em] text-violet-300">Training battle</p><h2 className="mt-1 text-2xl font-black">Put your progress to the test</h2><p className="mt-2 max-w-xl text-sm leading-6 text-white/55">This prototype uses a fictional training opponent. Future player duels will use level brackets and capped rewards.</p></div>
               <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-2 text-sm font-black"><span className="text-violet-300">⚡</span> {battleEnergy}/3 energy</div>
             </div>
             {battleState === "lobby" ? <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto] md:items-center"><div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-4"><div className="grid size-12 place-items-center rounded-xl bg-cyan-300/15 text-xl">🛡️</div><div><p className="text-xs font-black uppercase tracking-[.16em] text-cyan-300">Matched opponent</p><p className="font-black">PixelPace · Level 7</p><p className="text-sm text-white/45">Battle rating 1,230 · Friendly competitive</p></div></div><div className="flex items-center gap-4 md:justify-end"><div><p className="text-xs font-black uppercase tracking-[.16em] text-amber-300">Win reward</p><p className="font-black text-amber-200">◈ 120 coins + 10 XP</p></div><Button onClick={startBattle} disabled={battleEnergy < 1} className="h-12 rounded-xl bg-violet-400 px-5 font-black text-slate-950 hover:bg-violet-300 disabled:bg-white/10 disabled:text-white/35"><Swords /> Start duel</Button></div></div> : <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4 sm:p-5"><div className="mb-4 flex items-center justify-between text-sm font-black"><span className="text-cyan-200">You · Lv. 7</span><span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[.16em] text-white/45">{battleState === "won" ? "Victory" : "Round 1"}</span><span className="text-violet-200">PixelPace · Lv. 7</span></div><div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3"><div><div className="mb-2 flex justify-between text-xs font-bold text-white/50"><span>Champion energy</span><span>100%</span></div><div className="h-3 overflow-hidden rounded-full bg-white/10"><div className="h-full w-full rounded-full bg-gradient-to-r from-lime-300 to-cyan-300" /></div></div><span className="text-lg font-black text-white/35">VS</span><div><div className="mb-2 flex justify-between text-xs font-bold text-white/50"><span>Opponent energy</span><span>{opponentHp}%</span></div><div className="h-3 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-300 to-fuchsia-400 transition-all" style={{ width: `${opponentHp}%` }} /></div></div></div><div className="mt-5 flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-white/55">{battleState === "won" ? "Victory secured. Your reward has been added." : "Use an energy strike to deal 34 damage."}</p>{battleState === "won" ? <Button onClick={resetBattle} variant="outline" className="rounded-xl border-white/15 bg-white/5 font-bold text-white hover:bg-white/10">Back to battle hub</Button> : <Button onClick={useEnergyStrike} className="rounded-xl bg-lime-300 font-black text-slate-950 hover:bg-lime-200"><Zap /> Energy strike</Button>}</div></div>}
@@ -258,8 +270,10 @@ export default function QuestlineGame() {
         <aside className="grid content-start gap-5">
           <section className="game-panel rounded-[24px] border border-white/10 bg-gradient-to-b from-violet-500/15 to-white/[.04] p-5"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[.18em] text-violet-300">Avatar progress</p><h2 className="mt-1 text-xl font-black">Level 1</h2><p className="text-sm font-bold text-white/40">{profile.championClass}</p></div><span className="grid size-11 place-items-center rounded-xl bg-violet-400/15 text-violet-300"><Shield /></span></div><div className="mt-5 flex justify-between text-sm"><span className="font-bold text-white/60">Power XP</span><span className="font-black">{xp}/100</span></div><Progress value={xp} className="mt-2 h-3 bg-white/10 [&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-violet-400 [&_[data-slot=progress-indicator]]:to-cyan-300"/><p className="mt-4 text-sm leading-6 text-white/50">Level 2 unlocks the <strong className="text-cyan-200">Ion Trail</strong> and your first ranked bracket.</p><Button onClick={editSetup} variant="outline" className="mt-4 w-full rounded-xl border-white/15 bg-white/5 font-bold text-white hover:bg-white/10"><Sparkles /> Edit champion setup</Button></section>
           <section id="squad" className="game-panel rounded-[24px] border border-cyan-300/15 bg-cyan-300/[.055] p-5"><div className="flex items-start justify-between"><div><p className="text-xs font-black uppercase tracking-[.18em] text-cyan-300">Matchmaking</p><h2 className="mt-1 text-xl font-black">{matched ? "Squad found" : "Find your people"}</h2></div><Swords className="text-cyan-300" /></div><p className="mt-3 text-sm leading-6 text-white/55">Matched by shared goals, weekly activity, schedule, and competition style—not sensitive personal traits.</p>{matched ? <div className="mt-4 rounded-2xl border border-cyan-300/20 bg-black/20 p-4"><p className="font-black">Momentum Crew</p><p className="mt-1 text-sm text-white/50">4 players · Fitness + Learning · Friendly competitive</p></div> : null}<Button className="mt-4 w-full rounded-xl bg-cyan-300 font-black text-slate-950 hover:bg-cyan-200" onClick={() => setMatched(true)}><Users /> {matched ? "View Momentum Crew" : "Match me"}</Button></section>
+          <section className="game-panel rounded-[24px] border border-amber-300/15 bg-amber-300/[.055] p-5"><div className="flex items-start justify-between"><div><p className="text-xs font-black uppercase tracking-[.18em] text-amber-300">Daily rally</p><h2 className="mt-1 text-xl font-black">Protect your streak</h2></div><Bell className="text-amber-300" /></div><p className="mt-3 text-sm leading-6 text-white/55">{nativeApp ? "Get one private, on-device reminder each evening. No account or tracking required." : "Daily reminders will be available inside the installed iPhone app."}</p><Button disabled={!nativeApp || reminderState === "scheduled"} onClick={enableDailyReminder} variant="outline" className="mt-4 w-full rounded-xl border-amber-300/20 bg-amber-300/10 font-black text-amber-100 hover:bg-amber-300/15 disabled:opacity-60"><Bell /> {reminderState === "scheduled" ? "Reminder set for 8:00 PM" : reminderState === "denied" ? "Enable notifications in Settings" : nativeApp ? "Remind me at 8:00 PM" : "Available on iPhone"}</Button></section>
         </aside>
       </div>
+      <footer className="mx-auto max-w-[1500px] px-4 pb-24 text-center text-xs font-bold uppercase tracking-[.14em] text-white/30 sm:px-6 sm:pb-8 lg:px-8"><a className="hover:text-white" href="/privacy/">Privacy</a><span className="mx-3">·</span><a className="hover:text-white" href="/support/">Support</a><span className="mx-3">·</span><span>Prototype 1.0</span></footer>
       <nav className="mobile-nav fixed inset-x-3 bottom-3 z-50 grid grid-cols-4 rounded-2xl border border-white/15 bg-[#08152b]/95 p-2 shadow-[0_18px_50px_rgba(0,0,0,.45)] backdrop-blur-xl sm:hidden" aria-label="Mobile navigation"><a href="#quests" className="flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-black uppercase tracking-[.12em] text-amber-200"><Home className="size-4" /> Play</a><a href="#battle" className="flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-black uppercase tracking-[.12em] text-white/55"><Swords className="size-4" /> Battle</a><a href="#squad" className="flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-black uppercase tracking-[.12em] text-white/55"><Users className="size-4" /> Squad</a><a href="#leaderboard" className="flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-black uppercase tracking-[.12em] text-white/55"><Trophy className="size-4" /> Ranks</a></nav>
     </main>
   );

@@ -136,6 +136,24 @@ body {
   font-family: var(--font-sans);
 }
 
+html[data-native="ios"] body {
+  overscroll-behavior-y: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+html[data-native="ios"] .battle-royale-ui {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+html[data-native="ios"] input,
+html[data-native="ios"] textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 .battle-royale-ui {
   background-image: radial-gradient(circle at 75% 8%, rgba(55, 193, 255, .16), transparent 28rem), radial-gradient(circle at 5% 42%, rgba(255, 100, 86, .08), transparent 22rem);
 }

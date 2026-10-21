@@ -1,4 +1,27 @@
-# vinext-starter
+# Questline
+
+Questline turns daily habits into quests, coins, champion progression, practice battles, and squad competition. The same React interface ships on the web and as an offline-capable Capacitor iOS app.
+
+## iOS development
+
+Requirements: Node.js 22.13 or newer, Xcode, and the iOS platform tools. A paid Apple Developer membership is not required for the unsigned build or local development.
+
+- `npm run build:native`: create the static offline web bundle in `out/`
+- `npm run native:sync`: rebuild and copy the bundle and plugins into Xcode
+- `npm run native:open`: open `ios/App/App.xcodeproj` in Xcode
+- `npm run native:run`: sync and run against an available iOS destination
+
+The app identifier is `com.bytesoftay.questline`, the deployment target is iOS 15, and generated web assets under `ios/App/App/public` remain ignored. Always run `npm run native:sync` before an Xcode archive. Native features currently include safe-area styling, launch artwork, haptic quest/battle feedback, and an opt-in local 8 PM reminder. The reminder is scheduled on-device and does not require a server.
+
+To verify an unsigned device target from the command line:
+
+```sh
+xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath /tmp/questline-derived CODE_SIGNING_ALLOWED=NO build
+```
+
+The Simulator requires compatible macOS, Xcode, and CoreSimulator versions. A successful unsigned build does not prove a Simulator or physical-device launch.
+
+## Original Sites runtime
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 

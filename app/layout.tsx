@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { NativeRuntime } from "./native-runtime";
 
 export const metadata: Metadata = {
   title: "Questline — Turn habits into a game",
@@ -8,6 +9,18 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Questline",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#071b36",
 };
 
 export default function RootLayout({
@@ -17,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased"><NativeRuntime />{children}</body>
     </html>
   );
 }

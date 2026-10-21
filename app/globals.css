@@ -211,3 +211,29 @@ html { scroll-behavior: smooth; }
   pointer-events: none;
   background: linear-gradient(90deg, transparent, rgba(255, 202, 58, .14), rgba(51, 214, 255, .1), transparent);
 }
+
+.onboarding-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.onboarding-shell::before,
+.onboarding-shell::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  width: 34rem;
+  height: 34rem;
+  border-radius: 999px;
+  filter: blur(90px);
+  opacity: .22;
+}
+
+.onboarding-shell::before { top: -14rem; right: -8rem; background: #7c52ff; }
+.onboarding-shell::after { bottom: -18rem; left: -9rem; background: #33d6ff; }
+
+.onboarding-card {
+  border-radius: 30px 10px 30px 10px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .06);
+}

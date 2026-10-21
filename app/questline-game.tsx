@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { QuestlineOnboarding, type QuestlineProfile } from "@/app/onboarding";
 
 type Quest = { id: number; icon: string; title: string; detail: string; reward: number; color: string; complete: boolean };
 
@@ -14,6 +15,26 @@ const initialQuests: Quest[] = [
   { id: 2, icon: "📚", title: "Read 20 pages", detail: "Learning · Rare", reward: 60, color: "#a783ff", complete: false },
   { id: 3, icon: "💧", title: "Drink 8 glasses", detail: "Wellness · Common", reward: 35, color: "#b9ff46", complete: true },
 ];
+
+const profileStorageKey = "questline_profile_v1";
+const gameStorageKey = "questline_game_v1";
+
+function questsForProfile(profile: QuestlineProfile): Quest[] {
+  const visuals = [
+    { icon: "⚡", color: "#33d6ff", reward: 50 },
+    { icon: "◆", color: "#a783ff", reward: 60 },
+    { icon: "✦", color: "#b9ff46", reward: 70 },
+  ];
+  return profile.habits.map((title, index) => ({
+    id: index + 1,
+    icon: visuals[index].icon,
+    title,
+    detail: `${profile.goal} · Starter`,
+    reward: visuals[index].reward,
+    color: visuals[index].color,
+    complete: false,
+  }));
+}
 
 const leaderboard = [
   { rank: 1, name: "NovaKai", score: 8420, streak: 23, avatar: "N" },
@@ -24,9 +45,10 @@ const leaderboard = [
 ];
 
 export default function QuestlineGame() {
-  const [quests, setQuests] = useState(initialQuests);
-  const [coins, setCoins] = useState(1280);
-  const [xp, setXp] = useState(68);
+  const [profile, setProfile] = useState<QuestlineProfile | null | "loading">("loading");
+  const [quests, setQuests] = useState<Quest[]>([]);
+  const [coins, setCoins] = useState(250);
+  const [xp, setXp] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newQuest, setNewQuest] = useState("");
   const [matched, setMatched] = useState(false);
@@ -35,6 +57,55 @@ export default function QuestlineGame() {
   const [opponentHp, setOpponentHp] = useState(100);
   const done = useMemo(() => quests.filter((quest) => quest.complete).length, [quests]);
   const completionPercent = Math.round((done / quests.length) * 100);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(profileStorageKey);
+      if (!stored) {
+        setProfile(null);
+        return;
+      }
+      const savedProfile = JSON.parse(stored) as QuestlineProfile;
+      if (!savedProfile.championName || !Array.isArray(savedProfile.habits)) throw new Error("Invalid profile");
+      const savedGame = window.localStorage.getItem(gameStorageKey);
+      const game = savedGame ? JSON.parse(savedGame) as { quests?: Quest[]; coins?: number; xp?: number } : null;
+      setProfile(savedProfile);
+      setQuests(game?.quests?.length ? game.quests : questsForProfile(savedProfile));
+      setCoins(typeof game?.coins === "number" ? game.coins : 250);
+      setXp(typeof game?.xp === "number" ? game.xp : 0);
+    } catch {
+      window.localStorage.removeItem(profileStorageKey);
+      setProfile(null);
+    }
+  }, []);
+
+  function enterArena(nextProfile: QuestlineProfile) {
+    const starterQuests = questsForProfile(nextProfile);
+    window.localStorage.setItem(profileStorageKey, JSON.stringify(nextProfile));
+    window.localStorage.setItem(gameStorageKey, JSON.stringify({ quests: starterQuests, coins: 250, xp: 0 }));
+    setProfile(nextProfile);
+    setQuests(starterQuests);
+    setCoins(250);
+    setXp(0);
+  }
+
+  function exploreDemo() {
+    setProfile({ championName: "Rookie Volt", championClass: "Volt Runner", goal: "All-around", habits: initialQuests.map((quest) => quest.title), playStyle: "Friendly" });
+    setQuests(initialQuests);
+    setCoins(1280);
+    setXp(68);
+  }
+
+  function editSetup() {
+    window.localStorage.removeItem(profileStorageKey);
+    window.localStorage.removeItem(gameStorageKey);
+    setProfile(null);
+  }
+
+  useEffect(() => {
+    if (profile === "loading" || !profile || !window.localStorage.getItem(profileStorageKey) || quests.length === 0) return;
+    window.localStorage.setItem(gameStorageKey, JSON.stringify({ quests, coins, xp }));
+  }, [profile, quests, coins, xp]);
 
   function completeQuest(id: number) {
     setQuests((current) => current.map((quest) => {
@@ -126,6 +197,12 @@ export default function QuestlineGame() {
     return () => lifecycle.abort();
   }, [quests]);
 
+  if (profile === "loading") {
+    return <main className="battle-royale-ui grid min-h-screen place-items-center bg-[#071b36] text-white"><div className="text-center"><span className="mx-auto grid size-14 place-items-center rounded-2xl bg-amber-300 text-slate-950 shadow-[0_0_35px_rgba(255,216,79,.35)]"><Zap className="fill-current" /></span><p className="mt-4 text-xs font-black uppercase tracking-[.25em] text-white/45">Loading Questline</p></div></main>;
+  }
+
+  if (!profile) return <QuestlineOnboarding onComplete={enterArena} onSkip={exploreDemo} />;
+
   return (
     <main className="battle-royale-ui min-h-screen overflow-x-hidden bg-[#071b36] text-white">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#080918]/85 backdrop-blur-xl">
@@ -153,14 +230,14 @@ export default function QuestlineGame() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(117,75,255,.34),transparent_34%),radial-gradient(circle_at_20%_90%,rgba(45,212,255,.18),transparent_30%)]" />
             <div className="relative z-10 grid h-full items-center gap-6 md:grid-cols-[1fr_340px]">
               <div className="max-w-xl">
-                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-lime-300/25 bg-lime-300/10 px-3 py-1.5 text-xs font-black uppercase tracking-[.18em] text-lime-200"><Flame className="size-4" /> 12 day streak</div>
-                <p className="mb-2 text-sm font-bold uppercase tracking-[.22em] text-cyan-300">Daily campaign</p>
+                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-lime-300/25 bg-lime-300/10 px-3 py-1.5 text-xs font-black uppercase tracking-[.18em] text-lime-200"><Flame className="size-4" /> New challenger</div>
+                <p className="mb-2 text-sm font-bold uppercase tracking-[.22em] text-cyan-300">{profile.goal} campaign</p>
                 <h1 className="text-4xl font-black uppercase leading-[.95] tracking-[-.04em] sm:text-6xl">Ready up.<br/><span className="text-amber-300">Level up.</span></h1>
                 <p className="mt-5 max-w-md text-base leading-7 text-white/60">Queue your real-life quests, charge your champion, and climb the arena with players who share your goals.</p>
                 <div className="mt-7 flex flex-wrap gap-3"><Button className="h-12 rounded-xl bg-amber-300 px-6 font-black text-slate-950 hover:bg-amber-200" onClick={() => document.getElementById("quests")?.scrollIntoView({ behavior: "smooth" })}>View today’s quests <ChevronRight /></Button><Button variant="outline" className="h-12 rounded-xl border-white/15 bg-white/5 px-5 font-bold text-white hover:bg-white/10" onClick={() => document.getElementById("squad")?.scrollIntoView({ behavior: "smooth" })}><Users /> Find a squad</Button></div>
-                <div className="mt-5 flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-[.14em] text-white/45"><span className="inline-flex items-center gap-2"><span className="size-2 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(185,255,70,.8)]" /> Live season</span><span>·</span><span>12 day streak</span><span>·</span><span>{completionPercent}% run ready</span></div>
+                <div className="mt-5 flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-[.14em] text-white/45"><span className="inline-flex items-center gap-2"><span className="size-2 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(185,255,70,.8)]" /> Live season</span><span>·</span><span>{profile.playStyle} play</span><span>·</span><span>{completionPercent}% run ready</span></div>
               </div>
-              <div className="relative mx-auto h-[320px] w-full max-w-[310px] self-end"><div className="absolute inset-x-10 bottom-3 h-14 rounded-full bg-cyan-300/25 blur-2xl" /><Image src="/assets/questline-champion.png" alt="Your futuristic Questline champion avatar" fill priority className="object-contain object-bottom drop-shadow-[0_24px_40px_rgba(0,0,0,.5)]" /><div className="absolute bottom-4 left-0 rounded-2xl border border-white/15 bg-slate-950/75 p-3 backdrop-blur"><p className="text-xs font-bold text-white/45">CHAMPION</p><p className="font-black">Rookie Volt · Lv. 7</p></div></div>
+              <div className="relative mx-auto h-[320px] w-full max-w-[310px] self-end"><div className="absolute inset-x-10 bottom-3 h-14 rounded-full bg-cyan-300/25 blur-2xl" /><Image src="/assets/questline-champion.png" alt="Your futuristic Questline champion avatar" fill priority className="object-contain object-bottom drop-shadow-[0_24px_40px_rgba(0,0,0,.5)]" /><div className="absolute bottom-4 left-0 rounded-2xl border border-white/15 bg-slate-950/75 p-3 backdrop-blur"><p className="text-xs font-bold text-white/45">CHAMPION</p><p className="font-black">{profile.championName} · Lv. 1</p></div></div>
             </div>
           </div>
 
@@ -179,7 +256,7 @@ export default function QuestlineGame() {
         </section>
 
         <aside className="grid content-start gap-5">
-          <section className="game-panel rounded-[24px] border border-white/10 bg-gradient-to-b from-violet-500/15 to-white/[.04] p-5"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[.18em] text-violet-300">Avatar progress</p><h2 className="mt-1 text-xl font-black">Level 7</h2></div><span className="grid size-11 place-items-center rounded-xl bg-violet-400/15 text-violet-300"><Shield /></span></div><div className="mt-5 flex justify-between text-sm"><span className="font-bold text-white/60">Power XP</span><span className="font-black">{xp}/100</span></div><Progress value={xp} className="mt-2 h-3 bg-white/10 [&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-violet-400 [&_[data-slot=progress-indicator]]:to-cyan-300"/><p className="mt-4 text-sm leading-6 text-white/50">Level 8 unlocks the <strong className="text-cyan-200">Ion Trail</strong> and a 5% squad coin boost.</p><Button variant="outline" className="mt-4 w-full rounded-xl border-white/15 bg-white/5 font-bold text-white hover:bg-white/10"><Sparkles /> Customize champion</Button></section>
+          <section className="game-panel rounded-[24px] border border-white/10 bg-gradient-to-b from-violet-500/15 to-white/[.04] p-5"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[.18em] text-violet-300">Avatar progress</p><h2 className="mt-1 text-xl font-black">Level 1</h2><p className="text-sm font-bold text-white/40">{profile.championClass}</p></div><span className="grid size-11 place-items-center rounded-xl bg-violet-400/15 text-violet-300"><Shield /></span></div><div className="mt-5 flex justify-between text-sm"><span className="font-bold text-white/60">Power XP</span><span className="font-black">{xp}/100</span></div><Progress value={xp} className="mt-2 h-3 bg-white/10 [&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-violet-400 [&_[data-slot=progress-indicator]]:to-cyan-300"/><p className="mt-4 text-sm leading-6 text-white/50">Level 2 unlocks the <strong className="text-cyan-200">Ion Trail</strong> and your first ranked bracket.</p><Button onClick={editSetup} variant="outline" className="mt-4 w-full rounded-xl border-white/15 bg-white/5 font-bold text-white hover:bg-white/10"><Sparkles /> Edit champion setup</Button></section>
           <section id="squad" className="game-panel rounded-[24px] border border-cyan-300/15 bg-cyan-300/[.055] p-5"><div className="flex items-start justify-between"><div><p className="text-xs font-black uppercase tracking-[.18em] text-cyan-300">Matchmaking</p><h2 className="mt-1 text-xl font-black">{matched ? "Squad found" : "Find your people"}</h2></div><Swords className="text-cyan-300" /></div><p className="mt-3 text-sm leading-6 text-white/55">Matched by shared goals, weekly activity, schedule, and competition style—not sensitive personal traits.</p>{matched ? <div className="mt-4 rounded-2xl border border-cyan-300/20 bg-black/20 p-4"><p className="font-black">Momentum Crew</p><p className="mt-1 text-sm text-white/50">4 players · Fitness + Learning · Friendly competitive</p></div> : null}<Button className="mt-4 w-full rounded-xl bg-cyan-300 font-black text-slate-950 hover:bg-cyan-200" onClick={() => setMatched(true)}><Users /> {matched ? "View Momentum Crew" : "Match me"}</Button></section>
         </aside>
       </div>
